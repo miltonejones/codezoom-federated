@@ -6,11 +6,6 @@ on:
       - main
       - master
       - develop
-    paths:
-      - "app-host/**"
-      - "app-list/**"
-      - "app-workspace/**"
-      - "shared-types/**"
   workflow_dispatch:
 
 env:
