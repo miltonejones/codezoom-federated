@@ -146,7 +146,7 @@ export class App implements OnInit, OnDestroy, OnChanges {
   updateWelcome() {
     // alert(this.chatType);
 
-    this.welcomeMessage.set('loading...');
+    this.welcomeMessage.set('please wait...');
     this.chatService?.getWelcomeMessage({
       chatType: this.chatType,
       chatName: this.chatName,

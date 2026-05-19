@@ -42,14 +42,14 @@ WORKSPACE_TOKEN=$(az staticwebapp secrets list --name $WORKSPACE_NAME --resource
 echo -e "\n${YELLOW}🔨 Building applications...${NC}"
 cd "$REPO_ROOT"
 
-# for app in app-host app-list app-workspace; do
-#     if [ -d "$app" ]; then
-#         echo "Building $app..."
-#         cd "$app"
-#         npm run build -- --configuration=production 2>/dev/null || npm run build
-#         cd "$REPO_ROOT"
-#     fi
-# done'
+for app in app-host app-list app-workspace; do
+    if [ -d "$app" ]; then
+        echo "Building $app..."
+        cd "$app"
+        npm run build -- --configuration=production 2>/dev/null || npm run build
+        cd "$REPO_ROOT"
+    fi
+done
 
 echo $HOST_TOKEN
 
