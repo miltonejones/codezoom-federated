@@ -222,7 +222,7 @@ jobs:
           az staticwebapp appsettings set \
             --name ${{ steps.tokens.outputs.HOST_NAME }} \
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-            --settings "APP_LIST_URL=https://${LIST_URL}" "APP_WORKSPACE_URL=https://${WORKSPACE_URL}"
+            --setting-names "APP_LIST_URL=https://${LIST_URL}" "APP_WORKSPACE_URL=https://${WORKSPACE_URL}"
 
           echo "Federation URLs configured"
 
