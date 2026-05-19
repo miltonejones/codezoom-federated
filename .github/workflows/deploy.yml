@@ -149,13 +149,13 @@ jobs:
         if: steps.tokens.outputs.HOST_TOKEN != ''
         run: |
           echo "Deploying app-host..."
-          if [ -d "./app-host/dist/app-host" ]; then
+          if [ -d "./app-host/dist/app-host/browser" ]; then
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.HOST_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
               --app-name ${{ steps.tokens.outputs.HOST_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --app-location ./app-host/dist/app-host
+              --app-location ./app-host/dist/app-host/browser
           elif [ -d "./app-host/dist" ]; then
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.HOST_TOKEN }} \
@@ -172,13 +172,13 @@ jobs:
         if: steps.tokens.outputs.LIST_TOKEN != ''
         run: |
           echo "Deploying app-list..."
-          if [ -d "./app-list/dist/app-list" ]; then
+          if [ -d "./app-list/dist/app-list/browser" ]; then
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.LIST_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
               --app-name ${{ steps.tokens.outputs.LIST_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --app-location ./app-list/dist/app-list
+              --app-location ./app-list/dist/app-list/browser
           elif [ -d "./app-list/dist" ]; then
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.LIST_TOKEN }} \
@@ -194,13 +194,13 @@ jobs:
         if: steps.tokens.outputs.WORKSPACE_TOKEN != ''
         run: |
           echo "Deploying app-workspace..."
-          if [ -d "./app-workspace/dist/app-workspace" ]; then
+          if [ -d "./app-workspace/dist/app-workspace/browser" ]; then
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.WORKSPACE_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
               --app-name ${{ steps.tokens.outputs.WORKSPACE_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --app-location ./app-workspace/dist/app-workspace
+              --app-location ./app-workspace/dist/app-workspace/browser
           elif [ -d "./app-workspace/dist" ]; then
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.WORKSPACE_TOKEN }} \
