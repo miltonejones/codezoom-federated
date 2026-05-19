@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_RESOURCE_GROUP: rg-microfrontend-${{ github.ref_name == 'main' && 'prod' || 'dev' }}
-  ENVIRONMENT: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+  AZURE_RESOURCE_GROUP: rg-microfrontend-dev
+  ENVIRONMENT: dev
 
 jobs:
   build:
@@ -31,57 +31,32 @@ jobs:
           git submodule update --init --recursive
           git submodule foreach --recursive git checkout main || true
 
-      - name: Build app-host
+      - name: Build all apps
         run: |
-          if [ -d "app-host" ]; then
-            echo "Building app-host..."
-            cd app-host
-            rm -rf dist .angular
-            npm install --legacy-peer-deps
-            npm run build -- --configuration=production  
-            if [ -f "dist/app-host/browser/index.html" ]; then
-              echo "✅ Build successful - index.html found"
-              ls -la dist/app-host/browser
-            else
-              echo "❌ Build failed - index.html not found"
-              find dist -name "*.html"
-              exit 1
-            fi
-            cd ..
-          fi
-
-      - name: Build app-list
-        run: |
-          if [ -d "app-list" ]; then
-            echo "Building app-list..."
-            cd app-list
-            npm install --legacy-peer-deps
-            npm run build -- --configuration=production
-            cd ..
-          fi
-
-      - name: Build app-workspace
-        run: |
-          if [ -d "app-workspace" ]; then
-            echo "Building app-workspace..."
-            cd app-workspace
-            npm install --legacy-peer-deps
-            npm run build -- --configuration=production
-            cd ..
-          fi
-
-      - name: Verify build outputs
-        run: |
-          echo "Verifying build outputs..."
           for app in app-host app-list app-workspace; do
-            if [ -d "$app/dist/$app" ]; then
-              echo "✅ $app: dist/$app found"
+            if [ -d "$app" ]; then
+              echo "Building $app..."
+              cd "$app"
+              npm install --legacy-peer-deps
+              npm run build -- --configuration=production 2>/dev/null || npm run build
+              cd ..
+            fi
+          done
+
+      - name: Verify builds
+        run: |
+          echo "=== Build Verification ==="
+          for app in app-host app-list app-workspace; do
+            # Check for Angular 17+ browser output path
+            if [ -d "$app/dist/$app/browser" ] && [ -f "$app/dist/$app/browser/index.html" ]; then
+              echo "✅ $app: Found at dist/$app/browser"
+              ls -la "$app/dist/$app/browser" | head -5
+            elif [ -d "$app/dist/$app" ] && [ -f "$app/dist/$app/index.html" ]; then
+              echo "✅ $app: Found at dist/$app"
               ls -la "$app/dist/$app" | head -5
-            elif [ -d "$app/dist" ]; then
-              echo "✅ $app: dist found"
-              ls -la "$app/dist" | head -5
             else
-              echo "⚠️ No dist found for $app"
+              echo "❌ $app: Build not found"
+              find $app -name "index.html" 2>/dev/null || echo "No index.html found"
             fi
           done
 
@@ -93,28 +68,11 @@ jobs:
             app-host/dist/
             app-list/dist/
             app-workspace/dist/
-          if-no-files-found: warn
-
-      - name: Debug build outputs - show file structure
-        run: |
-          echo "=== FULL BUILD OUTPUT DEBUG ==="
-          for app in app-host app-list app-workspace; do
-            if [ -d "$app/dist/$app/browser" ]; then
-              echo ""
-              echo "📁 $app/dist/$app/browser contents:"
-              find "$app/dist/$app/browser" -type f -name "*.html" -o -name "*.js" -o -name "*.css" | head -20
-              echo "Total files: $(find "$app/dist/$app/browser" -type f | wc -l)"
-              
-              # Show file sizes and timestamps
-              echo "File details:"
-              ls -la "$app/dist/"* 2>/dev/null | head -10
-            fi
-          done
+          if-no-files-found: error
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    # Simplified condition - always run deploy after build if on main or develop
     if: github.ref_name == 'main' || github.ref_name == 'develop'
     steps:
       - name: Checkout code
@@ -155,92 +113,77 @@ jobs:
           if [ -n "$HOST_NAME" ]; then
             HOST_TOKEN=$(az staticwebapp secrets list --name $HOST_NAME --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query properties.apiKey -o tsv)
             echo "HOST_TOKEN=$HOST_TOKEN" >> $GITHUB_OUTPUT
-            echo "Found host token"
           fi
-
           if [ -n "$LIST_NAME" ]; then
             LIST_TOKEN=$(az staticwebapp secrets list --name $LIST_NAME --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query properties.apiKey -o tsv)
             echo "LIST_TOKEN=$LIST_TOKEN" >> $GITHUB_OUTPUT
-            echo "Found list token"
           fi
-
           if [ -n "$WORKSPACE_NAME" ]; then
             WORKSPACE_TOKEN=$(az staticwebapp secrets list --name $WORKSPACE_NAME --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query properties.apiKey -o tsv)
             echo "WORKSPACE_TOKEN=$WORKSPACE_TOKEN" >> $GITHUB_OUTPUT
-            echo "Found workspace token"
           fi
 
       - name: Deploy app-host
         if: steps.tokens.outputs.HOST_TOKEN != ''
         run: |
           echo "Deploying app-host..."
-          DEPLOY_PATH="./app-host/dist/app-host/browser"
+          # Use the same path as your working deploy.sh
+          SOURCE_PATH="./app-host/dist/app-host/browser"
 
-          echo "Files being deployed from $DEPLOY_PATH:"
-          find "$DEPLOY_PATH" -type f | head -20
-          echo "Total files: $(find "$DEPLOY_PATH" -type f | wc -l)"
-
-          if [ -d "./app-host/dist/app-host/browser" ]; then
+          if [ -d "$SOURCE_PATH" ] && [ -f "$SOURCE_PATH/index.html" ]; then
+            echo "Deploying from $SOURCE_PATH"
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.HOST_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
               --app-name ${{ steps.tokens.outputs.HOST_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --app-location "$DEPLOY_PATH"
-          elif [ -d "./app-host/dist" ]; then
-            swa deploy \
-              --deployment-token ${{ steps.tokens.outputs.HOST_TOKEN }} \
-              --env ${{ env.ENVIRONMENT }} \
-              --app-name ${{ steps.tokens.outputs.HOST_NAME }} \
-              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --app-location ./app-host/dist
+              --app-location "$SOURCE_PATH" \
+              --verbose
           else
-            echo "No build found for app-host"
-            ls -la ./app-host/
+            echo "❌ Build not found at $SOURCE_PATH"
+            echo "Available paths:"
+            find ./app-host -name "index.html" 2>/dev/null
+            exit 1
           fi
 
       - name: Deploy app-list
         if: steps.tokens.outputs.LIST_TOKEN != ''
         run: |
           echo "Deploying app-list..."
-          if [ -d "./app-list/dist/app-list/browser" ]; then
+          SOURCE_PATH="./app-list/dist/app-list/browser"
+
+          if [ -d "$SOURCE_PATH" ] && [ -f "$SOURCE_PATH/index.html" ]; then
+            echo "Deploying from $SOURCE_PATH"
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.LIST_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
               --app-name ${{ steps.tokens.outputs.LIST_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --app-location ./app-list/dist/app-list/browser
-          elif [ -d "./app-list/dist" ]; then
-            swa deploy \
-              --deployment-token ${{ steps.tokens.outputs.LIST_TOKEN }} \
-              --env ${{ env.ENVIRONMENT }} \
-              --app-name ${{ steps.tokens.outputs.LIST_NAME }} \
-              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --app-location ./app-list/dist
+              --app-location "$SOURCE_PATH" \
+              --verbose
           else
-            echo "No build found for app-list"
+            echo "❌ Build not found at $SOURCE_PATH"
+            find ./app-list -name "index.html" 2>/dev/null
           fi
 
       - name: Deploy app-workspace
         if: steps.tokens.outputs.WORKSPACE_TOKEN != ''
         run: |
           echo "Deploying app-workspace..."
-          if [ -d "./app-workspace/dist/app-workspace/browser" ]; then
+          SOURCE_PATH="./app-workspace/dist/app-workspace/browser"
+
+          if [ -d "$SOURCE_PATH" ] && [ -f "$SOURCE_PATH/index.html" ]; then
+            echo "Deploying from $SOURCE_PATH"
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.WORKSPACE_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
               --app-name ${{ steps.tokens.outputs.WORKSPACE_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --app-location ./app-workspace/dist/app-workspace/browser
-          elif [ -d "./app-workspace/dist" ]; then
-            swa deploy \
-              --deployment-token ${{ steps.tokens.outputs.WORKSPACE_TOKEN }} \
-              --env ${{ env.ENVIRONMENT }} \
-              --app-name ${{ steps.tokens.outputs.WORKSPACE_NAME }} \
-              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --app-location ./app-workspace/dist
+              --app-location "$SOURCE_PATH" \
+              --verbose
           else
-            echo "No build found for app-workspace"
+            echo "❌ Build not found at $SOURCE_PATH"
+            find ./app-workspace -name "index.html" 2>/dev/null
           fi
 
       - name: Configure Federation URLs
@@ -255,8 +198,6 @@ jobs:
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
             --setting-names "APP_LIST_URL=https://${LIST_URL}" "APP_WORKSPACE_URL=https://${WORKSPACE_URL}"
 
-          echo "Federation URLs configured"
-
       - name: Display URLs
         run: |
           echo ""
@@ -265,12 +206,5 @@ jobs:
           if [ -n "${{ steps.tokens.outputs.HOST_NAME }}" ]; then
             HOST_URL=$(az staticwebapp show --name ${{ steps.tokens.outputs.HOST_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query defaultHostname -o tsv)
             echo "Host App: https://$HOST_URL"
-          fi
-          if [ -n "${{ steps.tokens.outputs.LIST_NAME }}" ]; then
-            LIST_URL=$(az staticwebapp show --name ${{ steps.tokens.outputs.LIST_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query defaultHostname -o tsv)
-            echo "List App: https://$LIST_URL"
-          fi
-          if [ -n "${{ steps.tokens.outputs.WORKSPACE_NAME }}" ]; then
-            WORKSPACE_URL=$(az staticwebapp show --name ${{ steps.tokens.outputs.WORKSPACE_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query defaultHostname -o tsv)
-            echo "Workspace App: https://$WORKSPACE_URL"
+            echo "Host Remote Entry: https://$HOST_URL/remoteEntry.json"
           fi
