@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Changed from 18 to 20
+          node-version: "20"
 
       - name: Initialize submodules
         run: |
@@ -89,7 +89,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    if: always() && (github.ref_name == 'main' || github.ref_name == 'develop')
+    # Simplified condition - always run deploy after build if on main or develop
+    if: github.ref_name == 'main' || github.ref_name == 'develop'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -103,7 +104,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Changed from 18 to 20
+          node-version: "20"
 
       - name: Install SWA CLI
         run: npm install -g @azure/static-web-apps-cli
@@ -129,23 +130,26 @@ jobs:
           if [ -n "$HOST_NAME" ]; then
             HOST_TOKEN=$(az staticwebapp secrets list --name $HOST_NAME --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query properties.apiKey -o tsv)
             echo "HOST_TOKEN=$HOST_TOKEN" >> $GITHUB_OUTPUT
+            echo "Found host token"
           fi
 
           if [ -n "$LIST_NAME" ]; then
             LIST_TOKEN=$(az staticwebapp secrets list --name $LIST_NAME --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query properties.apiKey -o tsv)
             echo "LIST_TOKEN=$LIST_TOKEN" >> $GITHUB_OUTPUT
+            echo "Found list token"
           fi
 
           if [ -n "$WORKSPACE_NAME" ]; then
             WORKSPACE_TOKEN=$(az staticwebapp secrets list --name $WORKSPACE_NAME --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query properties.apiKey -o tsv)
             echo "WORKSPACE_TOKEN=$WORKSPACE_TOKEN" >> $GITHUB_OUTPUT
+            echo "Found workspace token"
           fi
 
       - name: Deploy app-host
         if: steps.tokens.outputs.HOST_TOKEN != ''
         run: |
+          echo "Deploying app-host..."
           if [ -d "./app-host/dist/app-host" ]; then
-            echo "Deploying app-host..."
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.HOST_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
@@ -153,7 +157,6 @@ jobs:
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
               --app-location ./app-host/dist/app-host
           elif [ -d "./app-host/dist" ]; then
-            echo "Deploying app-host from ./app-host/dist"
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.HOST_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
@@ -161,14 +164,15 @@ jobs:
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
               --app-location ./app-host/dist
           else
-            echo "⚠️ app-host build not found, skipping"
+            echo "No build found for app-host"
+            ls -la ./app-host/
           fi
 
       - name: Deploy app-list
         if: steps.tokens.outputs.LIST_TOKEN != ''
         run: |
+          echo "Deploying app-list..."
           if [ -d "./app-list/dist/app-list" ]; then
-            echo "Deploying app-list..."
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.LIST_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
@@ -176,7 +180,6 @@ jobs:
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
               --app-location ./app-list/dist/app-list
           elif [ -d "./app-list/dist" ]; then
-            echo "Deploying app-list from ./app-list/dist"
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.LIST_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
@@ -184,14 +187,14 @@ jobs:
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
               --app-location ./app-list/dist
           else
-            echo "⚠️ app-list build not found, skipping"
+            echo "No build found for app-list"
           fi
 
       - name: Deploy app-workspace
         if: steps.tokens.outputs.WORKSPACE_TOKEN != ''
         run: |
+          echo "Deploying app-workspace..."
           if [ -d "./app-workspace/dist/app-workspace" ]; then
-            echo "Deploying app-workspace..."
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.WORKSPACE_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
@@ -199,7 +202,6 @@ jobs:
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
               --app-location ./app-workspace/dist/app-workspace
           elif [ -d "./app-workspace/dist" ]; then
-            echo "Deploying app-workspace from ./app-workspace/dist"
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.WORKSPACE_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
@@ -207,7 +209,7 @@ jobs:
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
               --app-location ./app-workspace/dist
           else
-            echo "⚠️ app-workspace build not found, skipping"
+            echo "No build found for app-workspace"
           fi
 
       - name: Configure Federation URLs
@@ -222,8 +224,9 @@ jobs:
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
             --settings "APP_LIST_URL=https://${LIST_URL}" "APP_WORKSPACE_URL=https://${WORKSPACE_URL}"
 
+          echo "Federation URLs configured"
+
       - name: Display URLs
-        if: always()
         run: |
           echo ""
           echo "Deployment Complete!"
