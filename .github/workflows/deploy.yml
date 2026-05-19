@@ -90,9 +90,9 @@ jobs:
         with:
           name: app-builds
           path: |
-            app-host/dist/
-            app-list/dist/
-            app-workspace/dist/
+            app-host/dist/app-host/browser
+            app-list/dist/app-list/browser
+            app-workspace/dist/app-workspace/browser
           if-no-files-found: warn
 
       - name: Debug build outputs - show file structure
