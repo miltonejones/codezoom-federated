@@ -31,6 +31,38 @@ jobs:
           git submodule update --init --recursive
           git submodule foreach --recursive git checkout main || true
 
+      - name: Get dev environment URLs
+        id: urls
+        run: |
+          cd terraform
+
+          # Get app names
+          LIST_NAME=$(terraform output -json | jq -r '.static_web_apps.value."app-list".name')
+          WORKSPACE_NAME=$(terraform output -json | jq -r '.static_web_apps.value."app-workspace".name')
+
+          # Get dev hostnames
+          LIST_DEV_HOSTNAME=$(az staticwebapp environment list --name $LIST_NAME --resource-group rg-microfrontend-dev --query "[?name=='dev'].hostname" -o tsv)
+          WORKSPACE_DEV_HOSTNAME=$(az staticwebapp environment list --name $WORKSPACE_NAME --resource-group rg-microfrontend-dev --query "[?name=='dev'].hostname" -o tsv)
+
+          echo "list_url=https://${LIST_DEV_HOSTNAME}/remoteEntry.json" >> $GITHUB_OUTPUT
+          echo "workspace_url=https://${WORKSPACE_DEV_HOSTNAME}/remoteEntry.json" >> $GITHUB_OUTPUT
+
+          # Go back to root directory
+          cd ..
+
+      - name: Generate federation manifest
+        run: |
+          # Now we're in the root directory, so app-host/public is accessible
+          cat > app-host/public/federation.manifest.json << EOF
+          {
+            "app-list": "${{ steps.urls.outputs.list_url }}",
+            "app-workspace": "${{ steps.urls.outputs.workspace_url }}"
+          }
+          EOF
+
+          echo "Generated manifest at app-host/public/federation.manifest.json:"
+          cat app-host/public/federation.manifest.json
+
       - name: Build app-host
         run: |
           if [ -d "app-host" ]; then
