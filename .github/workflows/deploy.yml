@@ -36,8 +36,17 @@ jobs:
           if [ -d "app-host" ]; then
             echo "Building app-host..."
             cd app-host
+            rm -rf dist .angular
             npm install --legacy-peer-deps
-            npm run build -- --configuration=production
+            npm run build -- --configuration=production --delete-output-path
+            if [ -f "dist/app-host/browser/index.html" ]; then
+              echo "✅ Build successful - index.html found"
+              ls -la dist/app-host/browser
+            else
+              echo "❌ Build failed - index.html not found"
+              find dist -name "*.html"
+              exit 1
+            fi
             cd ..
           fi
 
@@ -85,6 +94,22 @@ jobs:
             app-list/dist/
             app-workspace/dist/
           if-no-files-found: warn
+
+      - name: Debug build outputs - show file structure
+        run: |
+          echo "=== FULL BUILD OUTPUT DEBUG ==="
+          for app in app-host app-list app-workspace; do
+            if [ -d "$app/dist/$app/browser" ]; then
+              echo ""
+              echo "📁 $app/dist/$app/browser contents:"
+              find "$app/dist/$app/browser" -type f -name "*.html" -o -name "*.js" -o -name "*.css" | head -20
+              echo "Total files: $(find "$app/dist/$app/browser" -type f | wc -l)"
+              
+              # Show file sizes and timestamps
+              echo "File details:"
+              ls -la "$app/dist/"* 2>/dev/null | head -10
+            fi
+          done
 
   deploy:
     runs-on: ubuntu-latest
@@ -149,13 +174,19 @@ jobs:
         if: steps.tokens.outputs.HOST_TOKEN != ''
         run: |
           echo "Deploying app-host..."
+          DEPLOY_PATH="./app-host/dist/app-host/browser"
+
+          echo "Files being deployed from $DEPLOY_PATH:"
+          find "$DEPLOY_PATH" -type f | head -20
+          echo "Total files: $(find "$DEPLOY_PATH" -type f | wc -l)"
+
           if [ -d "./app-host/dist/app-host/browser" ]; then
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.HOST_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
               --app-name ${{ steps.tokens.outputs.HOST_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --app-location ./app-host/dist/app-host/browser
+              --app-location "$DEPLOY_PATH"
           elif [ -d "./app-host/dist" ]; then
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.HOST_TOKEN }} \
