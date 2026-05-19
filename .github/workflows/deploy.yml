@@ -38,7 +38,7 @@ jobs:
             cd app-host
             rm -rf dist .angular
             npm install --legacy-peer-deps
-            npm run build -- --configuration=production --delete-output-path
+            npm run build -- --configuration=production  
             if [ -f "dist/app-host/browser/index.html" ]; then
               echo "✅ Build successful - index.html found"
               ls -la dist/app-host/browser
