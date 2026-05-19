@@ -30,20 +30,6 @@ jobs:
         with:
           node-version: "18"
 
-      - name: Build shared-types
-        run: |
-          if [ -d "shared-types" ]; then
-            echo "📦 Building shared-types..."
-            cd shared-types
-            if [ -f "package-lock.json" ] || [ -f "npm-shrinkwrap.json" ]; then
-              npm ci --legacy-peer-deps
-            else
-              npm install --legacy-peer-deps
-            fi
-            npm run build || echo "No build script for shared-types"
-            cd ..
-          fi
-
       - name: Build app-host
         run: |
           if [ -d "app-host" ]; then
