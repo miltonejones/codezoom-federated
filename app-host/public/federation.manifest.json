@@ -1,0 +1,5 @@
+{
+  "app-list": "http://localhost:4201/remoteEntry.json",
+  "app-host": "http://localhost:4200/remoteEntry.json",
+  "app-workspace": "http://localhost:4203/remoteEntry.json"
+}

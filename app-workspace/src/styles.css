@@ -1,0 +1,51 @@
+/* You can add global styles to this file, and also import other style files */
+:root {
+  /* Light theme colors */
+  --primary-color: #000;
+  --bg-color: #fff;
+  --header-bg: rgba(33, 37, 41, 0.1);
+  --border-color: rgba(0, 0, 0, 0.1);
+  --card-bg: #fff;
+  --text-color: #000;
+  --footer-bg: antiquewhite;
+  --bg-secondary: antiquewhite;
+  --footer-color: #303030;
+  --list-default-bg: #ffffff;
+  --list-active-bg: #0d6efd;
+  --codeinput-width: 100%;
+  --title-color: #212121;
+  --outline-border-color: #212529;
+  --userbubble-bg: var(--footer-bg);
+  --asstbubble-bg: #ffffff;
+
+  --divider-color: rgba(0, 0, 0, 0.175);
+  --muted-color: rgba(33, 37, 41, 0.75);
+  --pulse-dark-color: gainsboro;
+  --pulse-light-color: #f0f0f0;
+
+  /* Dark theme colors */
+  --dark-bg: #212121;
+  --darker-bg: #181818;
+  --dark-border: #303030;
+  --dark-text: white;
+  --dark-divider: #505050;
+  --dark-muted-color: rgba(255, 255, 255, 0.75);
+  --dark-title-color: rgb(194, 192, 182);
+  --dark-outline-border-color: #505050;
+
+  --rainbow-1: #ff4545;
+  --rainbow-2: #ffb347;
+  --rainbow-3: #ffff66;
+  --rainbow-4: #47ff47;
+  --rainbow-5: #47ffff;
+  --rainbow-6: #4747ff;
+  --rainbow-7: #ff47ff;
+  --rainbow-8: #ff4545;
+
+  --card-height: calc(100vh - 340px);
+  --workspace-height: calc(100vh - 36px);
+  --workspace-margin-left: 260px;
+  --workspace-top: 48px;
+  --workspace-max-width: calc(100vw - 270px);
+  --offinner-height: calc(100vh - 225px);
+}

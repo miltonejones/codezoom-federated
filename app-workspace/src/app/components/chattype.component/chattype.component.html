@@ -1,0 +1,22 @@
+<div class="dropdown">
+  <button
+    class="btn btn-sm dropdown-toggle"
+    type="button"
+    data-bs-toggle="dropdown"
+    aria-expanded="false"
+  >
+    <img [src]="selectedType.logo" [alt]="selectedType.label" width="24" height="24" />
+    {{ selectedType.label }}
+  </button>
+  <ul class="dropdown-menu">
+    @for (llm of chatTypes; track llm.key) {
+    <li>
+      <a (click)="setType(llm.key)" class="dropdown-item" href="#">
+        <img [src]="llm.logo" [alt]="llm.label" width="24" height="24" />
+
+        {{ llm.label }}</a
+      >
+    </li>
+    }
+  </ul>
+</div>

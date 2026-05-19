@@ -1,0 +1,77 @@
+<div class="input-wrapper">
+  <div class="typewriter" [ngClass]="{ open: messages().length > 0 }">
+    <h1>{{ welcomeMessage() }}</h1>
+  </div>
+  <div class="input-area" [ngClass]="{ open: messages().length > 0 }">
+    @if (uploadedFiles().length > 0) {
+    <div class="file-list">
+      @for (file of uploadedFiles(); track file.name) {
+      <app-file-card [cardFile]="file"></app-file-card>
+      }
+    </div>
+    }
+
+    <textarea
+      [ngModel]="localInput()"
+      [appPlaceholderImage]="state()"
+      (ngModelChange)="localInput.set($event)"
+      placeholder="Type your message...!"
+      (ngModelChange)="handleInputChange($event)"
+      (keydown.enter)="startMessage(); $event.preventDefault()"
+      rows="3"
+      [disabled]="isLoading()"
+    >
+    </textarea>
+    <div class="menu-area">
+      <div class="dropdown">
+        <button
+          class="btn btn-sm dropdown-toggle"
+          type="button"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
+          <i class="fa-solid fa-plus"></i>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item fw-bold" href="#">Add files</a></li>
+          <li class="mb-1"><hr class="dropdown-divider" /></li>
+          <li>
+            <a class="dropdown-item" href="#">
+              <label for="codeFile"> <i class="fa-solid fa-paperclip"></i> Upload code files</label>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="#">
+              <i class="fa-solid fa-globe"></i> Get files from URL
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="#">
+              <i class="fa-solid fa-paste"></i> Paste from clipboard
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <app-chattype
+        [chatType]="chatType()"
+        (getSelectedKey)="handleKeyChange($event)"
+      ></app-chattype>
+
+      <app-langtype
+        [langType]="langType()"
+        (getSelectedLang)="handleLangChange($event)"
+      ></app-langtype>
+
+      <div class="spacer"></div>
+
+      <button
+        class="btn btn-sm btn-primary"
+        (click)="startMessage()"
+        [disabled]="isLoading() || !uploadedFiles().length"
+      >
+        {{ isLoading() ? 'Sending...' : 'Send' }}
+      </button>
+    </div>
+  </div>
+</div>

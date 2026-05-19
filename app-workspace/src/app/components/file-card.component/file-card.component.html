@@ -1,0 +1,10 @@
+@let fileObj = cardFile()!;
+
+<div class="file-item" title="{{ fileObj.name }}" (click)="removeFile(fileObj.name)">
+  <div>
+    <i class="fa-solid fa-file-code"></i> {{ fileObj.name }} <span class="exit">&times;</span>
+  </div>
+  <div class="size">
+    <strong>{{ fileObj.extension }}</strong> {{ fileObj.size }}
+  </div>
+</div>

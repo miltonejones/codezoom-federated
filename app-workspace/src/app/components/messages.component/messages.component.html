@@ -1,0 +1,18 @@
+<div class="chat-window" [class.chatting]="messages().length > 0">
+  <div
+    *ngFor="let message of messages()"
+    class="message"
+    [class.user]="message.role === 'user'"
+    [class.assistant]="message.role === 'assistant'"
+  >
+    <div class="avatar">{{ message.role === 'user' ? '👤' : '🤖' }}</div>
+    <div class="bubble">
+      <div class="content" [innerHTML]="message.content"></div>
+      <div class="timestamp">{{ message.timestamp | date : 'shortTime' }}</div>
+    </div>
+  </div>
+  <div class="bubble-box"></div>
+  <div *ngIf="messages().length === 0" class="empty-state">
+    Start a conversation by typing a message below
+  </div>
+</div>

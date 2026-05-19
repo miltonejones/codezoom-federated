@@ -1,0 +1,28 @@
+<div class="chat-container" [class.chatting]="messages().length > 0">
+  <div class="typewriter">
+    <h1>{{ chatCaption() }}</h1>
+  </div>
+
+  <app-messages [messages]="messages()" />
+
+  <app-input-panel
+    [uploadedFiles]="uploadedFiles()"
+    [(chatType)]="chatType"
+    [(langType)]="langType"
+    [(isLoading)]="isLoading"
+    [messages]="messages()"
+    (messageSend)="startMessage($event)"
+    [welcomeMessage]="welcomeMessage()"
+    (chatTypeChange)="updateWelcome()"
+  ></app-input-panel>
+
+  <input
+    type="file"
+    id="codeFile"
+    class="uploader"
+    (change)="handleFileUpload($event)"
+    multiple
+    accept=".js  .js,.ts,.jsx,.tsx,.py,.java,.cpp,.c,.cs,.php,.rb,.go,.rs,.swift,.kt"
+    style="display: none"
+  />
+</div>

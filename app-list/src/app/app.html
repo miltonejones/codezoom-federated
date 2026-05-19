@@ -1,0 +1,25 @@
+<!-- @for(talk of savedConversations(); track talk.id) {
+<div (click)="loadConversation(talk.id)">
+  {{ talk.title }}
+</div>
+} -->
+
+<div class="header">
+  Code<strong><i>ZOOM</i></strong>
+</div>
+
+<ul class="list-group">
+  @for(talk of savedConversations(); track talk.id) {
+  <li
+    (click)="loadConversation(talk.id)"
+    [ngClass]="{ active: talk.id === currentConversationId }"
+    class="list-group-item d-flex align-items-start justify-content-between"
+  >
+    <div class="text-truncate me-2 cursor-pointer">
+      {{ talk.title }}
+    </div>
+    <div>×</div>
+  </li>
+
+  }
+</ul>
