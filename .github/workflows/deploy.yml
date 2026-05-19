@@ -21,18 +21,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: '18'
 
-      - name: Install Angular CLI globally
-        run: npm install -g @angular/cli
-
-      - name: Build app-host
+       - name: Build app-host
         run: |
           if [ -d "app-host" ]; then
             echo "🔨 Building app-host..."
             cd app-host
             npm install --legacy-peer-deps
-            npm run build -- --configuration=production
+            # Use npx to run local ng binary
+            npx ng build --configuration=production
             cd ..
           fi
 
@@ -42,7 +40,7 @@ jobs:
             echo "🔨 Building app-list..."
             cd app-list
             npm install --legacy-peer-deps
-            npm run build -- --configuration=production
+            npx ng build --configuration=production
             cd ..
           fi
 
@@ -52,7 +50,7 @@ jobs:
             echo "🔨 Building app-workspace..."
             cd app-workspace
             npm install --legacy-peer-deps
-            npm run build -- --configuration=production
+            npx ng build --configuration=production
             cd ..
           fi
 
@@ -99,7 +97,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: '18'
 
       - name: Install SWA CLI
         run: npm install -g @azure/static-web-apps-cli
@@ -113,31 +111,31 @@ jobs:
         id: tokens
         run: |
           echo "Getting app info for: ${{ env.AZURE_RESOURCE_GROUP }}"
-
+          
           # List all static web apps for debugging
           echo "Available static web apps:"
           az staticwebapp list --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "[].name" -o tsv
-
+          
           HOST_NAME=$(az staticwebapp list --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "[?contains(name, 'app-host')].name" -o tsv | head -1)
           LIST_NAME=$(az staticwebapp list --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "[?contains(name, 'app-list')].name" -o tsv | head -1)
           WORKSPACE_NAME=$(az staticwebapp list --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "[?contains(name, 'app-workspace')].name" -o tsv | head -1)
-
+          
           echo "HOST_NAME=$HOST_NAME" >> $GITHUB_OUTPUT
           echo "LIST_NAME=$LIST_NAME" >> $GITHUB_OUTPUT
           echo "WORKSPACE_NAME=$WORKSPACE_NAME" >> $GITHUB_OUTPUT
-
+          
           if [ -n "$HOST_NAME" ]; then
             HOST_TOKEN=$(az staticwebapp secrets list --name $HOST_NAME --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query properties.apiKey -o tsv)
             echo "HOST_TOKEN=$HOST_TOKEN" >> $GITHUB_OUTPUT
             echo "Found host app: $HOST_NAME"
           fi
-
+          
           if [ -n "$LIST_NAME" ]; then
             LIST_TOKEN=$(az staticwebapp secrets list --name $LIST_NAME --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query properties.apiKey -o tsv)
             echo "LIST_TOKEN=$LIST_TOKEN" >> $GITHUB_OUTPUT
             echo "Found list app: $LIST_NAME"
           fi
-
+          
           if [ -n "$WORKSPACE_NAME" ]; then
             WORKSPACE_TOKEN=$(az staticwebapp secrets list --name $WORKSPACE_NAME --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query properties.apiKey -o tsv)
             echo "WORKSPACE_TOKEN=$WORKSPACE_TOKEN" >> $GITHUB_OUTPUT
@@ -155,17 +153,18 @@ jobs:
               --app-name ${{ steps.tokens.outputs.HOST_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
               --app-location ./app-host/dist/app-host
-          elif [ -d "./dist/app-host" ]; then
-            echo "📤 Deploying app-host from ./dist/app-host"
+          elif [ -d "./app-host/dist" ]; then
+            echo "📤 Deploying app-host from ./app-host/dist"
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.HOST_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
               --app-name ${{ steps.tokens.outputs.HOST_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --app-location ./dist/app-host
+              --app-location ./app-host/dist
           else
             echo "❌ app-host build not found"
-            ls -la ./app-host/dist/ 2>/dev/null || echo "No dist folder"
+            echo "Contents of ./app-host:"
+            ls -la ./app-host/
             exit 1
           fi
 
@@ -180,16 +179,18 @@ jobs:
               --app-name ${{ steps.tokens.outputs.LIST_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
               --app-location ./app-list/dist/app-list
-          elif [ -d "./dist/app-list" ]; then
-            echo "📤 Deploying app-list from ./dist/app-list"
+          elif [ -d "./app-list/dist" ]; then
+            echo "📤 Deploying app-list from ./app-list/dist"
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.LIST_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
               --app-name ${{ steps.tokens.outputs.LIST_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --app-location ./dist/app-list
+              --app-location ./app-list/dist
           else
             echo "❌ app-list build not found"
+            echo "Contents of ./app-list:"
+            ls -la ./app-list/
             exit 1
           fi
 
@@ -204,16 +205,18 @@ jobs:
               --app-name ${{ steps.tokens.outputs.WORKSPACE_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
               --app-location ./app-workspace/dist/app-workspace
-          elif [ -d "./dist/app-workspace" ]; then
-            echo "📤 Deploying app-workspace from ./dist/app-workspace"
+          elif [ -d "./app-workspace/dist" ]; then
+            echo "📤 Deploying app-workspace from ./app-workspace/dist"
             swa deploy \
               --deployment-token ${{ steps.tokens.outputs.WORKSPACE_TOKEN }} \
               --env ${{ env.ENVIRONMENT }} \
               --app-name ${{ steps.tokens.outputs.WORKSPACE_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --app-location ./dist/app-workspace
+              --app-location ./app-workspace/dist
           else
             echo "❌ app-workspace build not found"
+            echo "Contents of ./app-workspace:"
+            ls -la ./app-workspace/
             exit 1
           fi
 
@@ -223,15 +226,20 @@ jobs:
           echo "🔧 Configuring federation URLs..."
           LIST_URL=$(az staticwebapp show --name ${{ steps.tokens.outputs.LIST_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query defaultHostname -o tsv)
           WORKSPACE_URL=$(az staticwebapp show --name ${{ steps.tokens.outputs.WORKSPACE_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query defaultHostname -o tsv)
-
+          
           az staticwebapp appsettings set \
             --name ${{ steps.tokens.outputs.HOST_NAME }} \
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
             --settings "APP_LIST_URL=https://${LIST_URL}" "APP_WORKSPACE_URL=https://${WORKSPACE_URL}"
+          
+          echo "✅ Federation URLs configured"
+          echo "APP_LIST_URL: https://${LIST_URL}"
+          echo "APP_WORKSPACE_URL: https://${WORKSPACE_URL}"
 
       - name: Display URLs
         if: always()
         run: |
+          echo ""
           echo "✅ Deployment Complete!"
           echo "==================================="
           if [ -n "${{ steps.tokens.outputs.HOST_NAME }}" ]; then
