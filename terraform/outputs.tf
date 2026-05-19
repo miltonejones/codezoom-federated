@@ -28,3 +28,21 @@ output "federation_endpoints" {
     key => "https://${app.default_host_name}/remoteEntry.json"
   }
 }
+
+output "federation_config" {
+  description = "Federation configuration for each app"
+  value = {
+    "app-list"     = "https://${azurerm_static_web_app.apps["app-list"].default_host_name}/remoteEntry.json"
+    "app-workspace" = "https://${azurerm_static_web_app.apps["app-workspace"].default_host_name}/remoteEntry.json"
+    "app-host"      = "https://${azurerm_static_web_app.apps["app-host"].default_host_name}/remoteEntry.json"
+  }
+}
+
+output "dev_federation_config" {
+  description = "Dev environment federation URLs"
+  value = {
+    "app-list"     = "https://${azurerm_static_web_app.apps["app-list"].name}-dev.eastus2.7.azurestaticapps.net/remoteEntry.json"
+    "app-workspace" = "https://${azurerm_static_web_app.apps["app-workspace"].name}-dev.eastus2.7.azurestaticapps.net/remoteEntry.json"
+    "app-host"      = "https://${azurerm_static_web_app.apps["app-host"].name}-dev.eastus2.7.azurestaticapps.net/remoteEntry.json"
+  }
+}
