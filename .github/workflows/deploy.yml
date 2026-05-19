@@ -256,6 +256,27 @@ jobs:
             echo "No build found for app-workspace"
           fi
 
+      - name: Configure CORS for remote apps
+        run: |
+          # Get app names
+          LIST_NAME=$(az staticwebapp list --resource-group rg-microfrontend-dev --query "[?contains(name, 'app-list')].name" -o tsv | head -1)
+          WORKSPACE_NAME=$(az staticwebapp list --resource-group rg-microfrontend-dev --query "[?contains(name, 'app-workspace')].name" -o tsv | head -1)
+          HOST_URL=$(az staticwebapp show --name $(az staticwebapp list --resource-group rg-microfrontend-dev --query "[?contains(name, 'app-host')].name" -o tsv | head -1) --resource-group rg-microfrontend-dev --query defaultHostname -o tsv)
+
+          # Add CORS for list app
+          az staticwebapp cors add \
+            --name $LIST_NAME \
+            --resource-group rg-microfrontend-dev \
+            --allowed-origins "https://${HOST_URL}"
+
+          # Add CORS for workspace app
+          az staticwebapp cors add \
+            --name $WORKSPACE_NAME \
+            --resource-group rg-microfrontend-dev \
+            --allowed-origins "https://${HOST_URL}"
+
+          echo "CORS configured for remote apps"
+
       - name: Configure Federation URLs
         if: steps.tokens.outputs.HOST_TOKEN != ''
         run: |
