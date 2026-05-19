@@ -1,0 +1,29 @@
+{
+  "name": "microfrontend-monorepo",
+  "version": "1.0.0",
+  "scripts": {
+    "build:shared": "cd shared-types && npm run build",
+    "build:host": "cd app-host && npm run build",
+    "build:list": "cd app-list && npm run build",
+    "build:workspace": "cd app-workspace && npm run build",
+    "build:all:dev": "npm run build:host && npm run build:list && npm run build:workspace",
+    "build:all": "npm run build:host && npm run build:list && npm run build:workspace",
+    "build:all:prod": "npm run build:host -- --configuration=production && npm run build:list -- --configuration=production && npm run build:workspace -- --configuration=production",
+    "serve:host": "cd app-host && npm start",
+    "serve:list": "cd app-list && npm start",
+    "serve:workspace": "cd app-workspace && npm start",
+    "serve:all": "concurrently \"npm run serve:host\" \"npm run serve:list\" \"npm run serve:workspace\"",
+    "deploy:dev": "cd terraform && ./deploy.sh dev",
+    "deploy:prod": "cd terraform && ./deploy.sh prod"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0",
+    "@angular/cli": "^17.0.0"
+  },
+  "workspaces": [
+    "app-host",
+    "app-list",
+    "app-workspace",
+    "shared-types"
+  ]
+}
