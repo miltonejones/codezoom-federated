@@ -17,11 +17,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20" # Changed from 18 to 20
+
+      - name: Initialize submodules
+        run: |
+          git submodule update --init --recursive
+          git submodule foreach --recursive git checkout main || true
 
       - name: Build app-host
         run: |
@@ -29,7 +37,6 @@ jobs:
             echo "Building app-host..."
             cd app-host
             npm install --legacy-peer-deps
-            # Use npm run build instead of npx ng build
             npm run build -- --configuration=production
             cd ..
           fi
@@ -66,8 +73,6 @@ jobs:
               ls -la "$app/dist" | head -5
             else
               echo "⚠️ No dist found for $app"
-              # Show what is in the directory
-              ls -la "$app/"
             fi
           done
 
@@ -98,7 +103,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20" # Changed from 18 to 20
 
       - name: Install SWA CLI
         run: npm install -g @azure/static-web-apps-cli
