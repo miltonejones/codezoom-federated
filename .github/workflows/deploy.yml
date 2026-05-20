@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_RESOURCE_GROUP: rg-microfrontend-${{ github.ref_name == 'main' && 'prod' || 'dev' }}
-  ENVIRONMENT: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+  AZURE_RESOURCE_GROUP: rg-microfrontend-dev
+  ENVIRONMENT: ${{ github.ref_name == 'main' && 'default' || 'dev' }}
 
 jobs:
   build:
@@ -31,44 +31,59 @@ jobs:
           git submodule update --init --recursive
           git submodule foreach --recursive git checkout main || true
 
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Verify Azure resource group exists
+        run: |
+          echo "Checking resource group: ${{ env.AZURE_RESOURCE_GROUP }}"
+
+          if az group exists --name ${{ env.AZURE_RESOURCE_GROUP }} | grep -q "true"; then
+            echo "✅ Resource group '${{ env.AZURE_RESOURCE_GROUP }}' exists"
+          else
+            echo "⚠️ Resource group '${{ env.AZURE_RESOURCE_GROUP }}' does not exist"
+            echo "Creating resource group..."
+            az group create \
+              --name ${{ env.AZURE_RESOURCE_GROUP }} \
+              --location eastus
+              
+            if [ $? -eq 0 ]; then
+              echo "✅ Resource group '${{ env.AZURE_RESOURCE_GROUP }}' created successfully"
+            else
+              echo "❌ Failed to create resource group"
+              exit 1
+            fi
+          fi
+
+      - name: Get remote entry locations
+        id: remotes
+      - run: |
+
+          echo "Looking up remote URLs..."
+
+          LIST_APP_NAME=$(az staticwebapp list --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "[?contains(name, 'app-list')].name" -o tsv | head -1)
+          WORKSPACE_APP_NAME=$(az staticwebapp list --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "[?contains(name, 'app-workspace')].name" -o tsv | head -1)
+
+          LIST_REMOTE_URL=$(az staticwebapp environment list --name $LIST_APP_NAME --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "[?name=='${{ env.ENVIRONMENT }}'].hostname" -o tsv) 
+          WORKSPACE_REMOTE_URL=$(az staticwebapp environment list --name $WORKSPACE_APP_NAME --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "[?name=='${{ env.ENVIRONMENT }}'].hostname" -o tsv)  
+
+          echo "LIST_REMOTE_URL=$LIST_REMOTE_URL" >> $GITHUB_OUTPUT
+          echo "WORKSPACE_REMOTE_URL=$WORKSPACE_REMOTE_URL" >> $GITHUB_OUTPUT
+
       - name: Generate federation manifest
         run: |
 
           cat > app-host/public/federation.manifest.json << 'EOF'
           {
-            "app-list": "https://green-sea-0deac540f-dev.eastus2.7.azurestaticapps.net/remoteEntry.json",
-            "app-workspace": "https://yellow-water-00b488b0f-dev.eastus2.7.azurestaticapps.net/remoteEntry.json"
+            "app-list": "${{ steps.remotes.outputs.LIST_REMOTE_URL}}/remoteEntry.json",
+            "app-workspace": "${{ steps.remotes.outputs.WORKSPACE_REMOTE_URL}}/remoteEntry.json"
           }
           EOF
 
           echo "Generated manifest:"
           cat app-host/public/federation.manifest.json
-
-      - name: Add CORS configuration to apps
-        run: |
-          # For app-list
-          cat > app-list/src/staticwebapp.config.json << 'EOF'
-          {
-            "globalHeaders": {
-              "Access-Control-Allow-Origin": "https://happy-grass-0e377e40f-dev.eastus2.7.azurestaticapps.net",
-              "Access-Control-Allow-Methods": "GET, OPTIONS",
-              "Access-Control-Allow-Headers": "Content-Type"
-            }
-          }
-          EOF
-
-          # For app-workspace
-          cat > app-workspace/src/staticwebapp.config.json << 'EOF'
-          {
-            "globalHeaders": {
-              "Access-Control-Allow-Origin": "https://happy-grass-0e377e40f-dev.eastus2.7.azurestaticapps.net",
-              "Access-Control-Allow-Methods": "GET, OPTIONS",
-              "Access-Control-Allow-Headers": "Content-Type"
-            }
-          }
-          EOF
-
-          echo "CORS configuration added to apps"
 
       - name: Build app-host
         run: |
