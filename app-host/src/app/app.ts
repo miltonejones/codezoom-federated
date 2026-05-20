@@ -1,6 +1,7 @@
 import {
   Component,
   ComponentRef,
+  effect,
   OnDestroy,
   OnInit,
   signal,
@@ -11,6 +12,7 @@ import { RouterOutlet } from '@angular/router';
 import { MicroFrontend } from './micro-frontend';
 import { ChatManagerService, ConversationManagerService, FileManagerService } from './services';
 import { CommonModule } from '@angular/common';
+import { AuthService, UserInfo } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -28,14 +30,33 @@ export class App implements OnInit, OnDestroy {
   private workspaceComponentRef: ComponentRef<any> | null = null;
   collapsed = signal<Boolean>(false);
 
+  user: UserInfo | null = null;
+
   constructor(
     private microSvc: MicroFrontend,
     private convoSvc: ConversationManagerService,
     private fileSvc: FileManagerService,
-    private chatSvc: ChatManagerService
+    private chatSvc: ChatManagerService,
+    private authService: AuthService
   ) {}
 
+  login() {
+    this.authService.login();
+  }
+
+  logout() {
+    this.authService.logout();
+  }
+
   async ngOnInit() {
+    // this.user = this.authService.user$();
+    // await this.authService.getUser();
+
+    // // Also subscribe to changes if needed
+    // effect(() => {
+    //   this.user = this.authService.user$();
+    // });
+
     window.addEventListener('paneSize', (e: Event) => {
       const customEvent = e as CustomEvent;
       this.collapsed.set(customEvent.detail.collapsed);

@@ -1,3 +1,17 @@
+<!-- <header>
+  <h1>{{ title() }}</h1>
+  <div class="auth-buttons">
+    @if (user; as user) {
+    <div class="user-info">
+      <span>Welcome, {{ user.name || user.username }}!</span>
+      <button (click)="logout()">Logout</button>
+    </div>
+    } @else {
+    <button (click)="login()">Login</button>
+    }
+  </div>
+</header> -->
+
 <div class="app-host" [ngClass]="{ collapsed: collapsed() }">
   <div class="app-list">
     <ng-container #appList></ng-container>

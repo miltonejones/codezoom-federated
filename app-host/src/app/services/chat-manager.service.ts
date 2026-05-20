@@ -143,7 +143,7 @@ export class ChatManagerService implements OnInit {
 
     // Create request for initial message with default prompt
     const initialRequest: ConversationRequest = {
-      message: 'explain this code',
+      message: currentInput || 'explain this code',
       chatType: this.chatType,
       conversationHistory: this.messages,
       code: currentInput,
@@ -181,7 +181,7 @@ export class ChatManagerService implements OnInit {
         {
           role: 'user',
           messageId: currentMessageId,
-          content: 'explain this code',
+          content: currentInput || 'explain this code',
           timestamp: Date.now(),
         },
       ];

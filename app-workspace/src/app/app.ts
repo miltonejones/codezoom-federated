@@ -67,7 +67,6 @@ export class App implements OnInit, OnDestroy, OnChanges {
   startMessage(message: string): void {
     const userInput = this.userInput();
     this.userInput.set('');
-    // debugger;
     this.chatService?.initMessaage(
       this.messages(),
       message,
@@ -76,7 +75,6 @@ export class App implements OnInit, OnDestroy, OnChanges {
       this.uploadedFiles()
     );
     this.isLoading = true;
-    // this.userInput.set('');
   }
 
   announce() {
@@ -130,7 +128,6 @@ export class App implements OnInit, OnDestroy, OnChanges {
     });
 
     this.currentConversationId = `conv${Date.now()}`;
-    console.log({ init: this.chatService });
 
     this.chatService?.messageComplete.subscribe((messages) => {
       this.messages.set(messages);
@@ -143,7 +140,6 @@ export class App implements OnInit, OnDestroy, OnChanges {
         this.saveConversation();
         return;
       }
-      console.log({ isStreaming });
     });
 
     this.chatService?.messageTitle.subscribe((title) => {
@@ -153,11 +149,6 @@ export class App implements OnInit, OnDestroy, OnChanges {
     this.chatService?.messageWelcome.subscribe((msg) => {
       this.welcomeMessage.set(msg);
     });
-
-    // this.chatService?.getWelcomeMessage({
-    //   chatType: this.chatType,
-    //   chatName: this.chatName,
-    // });
   }
 
   updateWelcome() {
