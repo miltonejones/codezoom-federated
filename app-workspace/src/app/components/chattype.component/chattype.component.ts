@@ -1,28 +1,29 @@
 import { Component, input, output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { ChatType } from '@code-zoom/shared-types';
+import { AssetsService } from '../../services/assets.service';
 
 export const chatTypes: ChatType[] = [
   {
     label: 'ChatGPT',
-    logo: 'http://localhost:4203/ChatGPT_logo.svg.png',
+    logo: 'ChatGPT_logo.svg.png',
     key: 'gpt',
     url: 'https://platform.openai.com/docs/overview',
   },
   {
     label: 'Claude',
-    logo: 'http://localhost:4203/Claude_AI_symbol.svg.png',
+    logo: 'Claude_AI_symbol.svg.png',
     key: 'claude',
     url: 'https://www.claude.com/platform/api',
   },
   {
     label: 'Deepseek',
-    logo: 'http://localhost:4203/Deepseek-logo-icon.svg.png',
+    logo: 'Deepseek-logo-icon.svg.png',
     key: 'deep',
     url: 'https://api-docs.deepseek.com/',
   },
   {
     label: 'Gemini',
-    logo: 'http://localhost:4203/Google-gemini-icon.svg.png',
+    logo: 'Google-gemini-icon.svg.png',
     key: 'gemini',
     url: 'https://ai.google.dev/',
   },
@@ -44,8 +45,18 @@ export class ChattypeComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {}
 
+  constructor(private assetSvc: AssetsService) {
+    this.chatTypes = chatTypes.map((t) => ({
+      ...t,
+      logo: this.assetSvc.getImageUrl(t.logo),
+    }));
+    this.selectedType = chatTypes[0];
+  }
+
   updateType() {
-    const updatedType: ChatType | undefined = chatTypes.find((t) => t.key === this.selectedKey);
+    const updatedType: ChatType | undefined = this.chatTypes.find(
+      (t) => t.key === this.selectedKey
+    );
     this.selectedType = updatedType!;
     this.getSelectedKey.emit(this.selectedKey);
   }
