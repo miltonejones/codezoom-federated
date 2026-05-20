@@ -59,7 +59,7 @@ jobs:
 
       - name: Get remote entry locations
         id: remotes
-      - run: |
+        run: |
 
           echo "Looking up remote URLs..."
 
