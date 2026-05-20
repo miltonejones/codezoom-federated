@@ -99,6 +99,19 @@ jobs:
             cd ..
           fi
 
+      - name: Add CORS to app-list
+        run: |
+          # After building, add the CORS config to the build output
+          cat > app-list/dist/app-list/browser/staticwebapp.config.json << 'EOF'
+          {
+            "globalHeaders": {
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Methods": "GET, OPTIONS",
+              "Access-Control-Allow-Headers": "Content-Type"
+            }
+          }
+          EOF
+
       - name: Build app-workspace
         run: |
           if [ -d "app-workspace" ]; then
@@ -108,6 +121,19 @@ jobs:
             npm run build -- --configuration=production
             cd ..
           fi
+
+      - name: Add CORS to app-workspace
+        run: |
+          # After building, add the CORS config to the build output
+          cat > app-list/dist/app-workspace/browser/staticwebapp.config.json << 'EOF'
+          {
+            "globalHeaders": {
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Methods": "GET, OPTIONS",
+              "Access-Control-Allow-Headers": "Content-Type"
+            }
+          }
+          EOF
 
       - name: Verify build outputs
         run: |
