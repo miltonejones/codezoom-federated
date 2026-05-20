@@ -21,7 +21,3 @@
   height: calc(100vh - 60px);
   overflow-y: scroll;
 }
-
-.collapsed {
-  margin-bottom: 2rem;
-}

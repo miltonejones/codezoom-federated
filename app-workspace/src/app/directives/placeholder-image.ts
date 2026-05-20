@@ -7,6 +7,7 @@ import { chatTypes } from '../components/chattype.component/chattype.component';
 })
 export class PlaceholderImage implements OnInit, OnChanges {
   @Input('appPlaceholderImage') state?: any = { chatType: 'deep' };
+  @Input('hasMessages') hasMessages?: boolean = false;
   constructor(private el: ElementRef<HTMLTextAreaElement>) {}
 
   ngOnInit(): void {
@@ -23,6 +24,8 @@ export class PlaceholderImage implements OnInit, OnChanges {
     // alert(JSON.stringify({ updatedType, state: this.state }));
     if (!updatedType) return;
 
-    this.el.nativeElement.placeholder = `Paste code or add files to chat with ${updatedType.label}`;
+    this.el.nativeElement.placeholder = this.hasMessages
+      ? `Ask ${updatedType.label} a follow-up question`
+      : `Paste code or add files to chat with ${updatedType.label}`;
   }
 }

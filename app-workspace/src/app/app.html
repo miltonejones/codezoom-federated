@@ -1,9 +1,21 @@
-<div class="chat-container" [class.chatting]="messages().length > 0">
+<div
+  class="chat-container"
+  [class.collapsed]="collapsed()"
+  [class.chatting]="messages().length > 0"
+>
+  @if(collapsed()) {
+  <div class="banner">
+    @if (logo()) {
+    <img [src]="logo()" [alt]="label()" width="24" height="24" />
+    } Code<strong><i>ZOOM</i></strong>
+  </div>
+  }
+
   <div class="typewriter">
     <h1>{{ chatCaption() }}</h1>
   </div>
 
-  <app-messages [messages]="messages()" />
+  <app-messages [messages]="messages()" [collapsed]="collapsed()" />
 
   <app-input-panel
     [uploadedFiles]="uploadedFiles()"

@@ -1,16 +1,28 @@
 import { loadRemoteModule } from '@angular-architects/native-federation';
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, OnInit, signal, SimpleChanges } from '@angular/core';
+import {
+  AfterContentInit,
+  afterNextRender,
+  Component,
+  Input,
+  OnChanges,
+  OnInit,
+  signal,
+  SimpleChanges,
+} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ChatMessage, ConversationManager, SavedConversation } from '@code-zoom/shared-types';
+import { SearchModalComponent } from './components/search-modal.component/search-modal.component';
+import { ChatGrouperService } from './services/chat-grouper.service';
+import { GroupedListComponent } from './components/grouped-list.component/grouped-list.component';
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule],
+  imports: [CommonModule, SearchModalComponent, GroupedListComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App implements OnInit, OnChanges {
+export class App implements OnInit, OnChanges, AfterContentInit {
   protected readonly title = signal('app-list');
   @Input() dynamoService: ConversationManager | null = null;
 
@@ -18,10 +30,19 @@ export class App implements OnInit, OnChanges {
   savedConversations = signal<SavedConversation[]>([]);
   SELECT_EVENT_NAME = 'get-conversation';
   currentConversationId = '';
+  logo = signal('');
+  label = signal('');
+  collapsed = signal<Boolean>(false);
+  groupedConversations = signal<Record<string, SavedConversation[]>>({});
+  sortedDates = signal<string[]>([]);
+
+  constructor(private chatGrouper: ChatGrouperService) {
+    afterNextRender(() => {
+      this.loadService();
+    });
+  }
 
   ngOnInit(): void {
-    this.loadService();
-
     window.addEventListener('updateList', (e: Event) => {
       // debugger;
       const customEvent = e as CustomEvent;
@@ -29,55 +50,71 @@ export class App implements OnInit, OnChanges {
       // alert(this.currentConversationId);
       this.updateSaveList();
     });
+
+    window.addEventListener('logoUpdate', (e: Event) => {
+      const customEvent = e as CustomEvent;
+      this.logo.set(customEvent.detail.logo);
+      this.label.set(customEvent.detail.label);
+    });
   }
   ngOnChanges(changes: SimpleChanges): void {
     // this.loadService();
   }
 
-  public counter = '';
-  // iterate() {
-  //   this.counter++;
-  //   this.announce();
-  // }
+  ngAfterContentInit(): void {
+    // this.loadService();
+  }
 
-  // announce() {
-  //   this.currentConversationId = this.counter;
-  //   window.dispatchEvent(
-  //     new CustomEvent(this.SELECT_EVENT_NAME, { detail: { counter: this.counter } })
-  //   );
-  // }
+  public counter = '';
 
   async loadService() {
-    // console.log('Loading service');
-    // // Load the service from the host at RUNTIME (not build time)
-    // const hostModule = await loadRemoteModule({
-    //   remoteName: 'app-host',
-    //   exposedModule: './SharedService',
-    //   remoteEntry: 'http://localhost:4200/remoteEntry.json',
-    // });
-    console.log('Service loaded');
-    // this.dynamoService = hostModule.ConversationManagerService;
-    console.log({ c: this.dynamoService });
-    // debugger;
-    const items = await this.dynamoService?.loadAllConversations();
-    // If it's a class (not an instance), you'd need to instantiate it
-    // Or if the host exported an instance directly, you can use it
-    // debugger;
-    console.log('Service loaded:', this.dynamoService, { items });
-
     this.updateSaveList();
   }
 
   async updateSaveList() {
     const savedConversations = await this.dynamoService?.loadAllConversations();
-    console.log({ savedConversations });
     if (savedConversations) {
-      this.savedConversations.set(savedConversations);
+      setTimeout(() => {
+        this.savedConversations.set(savedConversations);
+        // this.getSortedConversations(savedConversations);
+      });
     }
+  }
+
+  getSortedConversations(savedConversations: SavedConversation[]) {
+    this.groupedConversations.set(this.chatGrouper.groupByDate(savedConversations));
+    this.sortedDates.set(this.chatGrouper.getSortedDates(this.groupedConversations()));
+  }
+
+  collapse() {
+    this.collapsed.update((on) => {
+      return !on;
+    });
+    window.dispatchEvent(
+      new CustomEvent('paneSize', {
+        detail: {
+          collapsed: this.collapsed(),
+        },
+      })
+    );
   }
 
   loadConversation(id: string) {
     this.currentConversationId = id;
     window.dispatchEvent(new CustomEvent(this.SELECT_EVENT_NAME, { detail: { id } }));
+  }
+  clearConversation() {
+    this.currentConversationId = '';
+    window.dispatchEvent(new CustomEvent('chatClear'));
+  }
+
+  showModal() {
+    window.showSearchModal && window.showSearchModal();
+  }
+}
+
+declare global {
+  interface Window {
+    showSearchModal: () => void;
   }
 }

@@ -9,6 +9,10 @@
       <app-file-card [cardFile]="file"></app-file-card>
       }
     </div>
+    } @if (messages().length > 0) {
+    <div class="quick-area">
+      <app-quick-prompts (messageSet)="setMessage($event)"></app-quick-prompts>
+    </div>
     }
 
     <textarea
@@ -20,6 +24,7 @@
       (keydown.enter)="startMessage(); $event.preventDefault()"
       rows="3"
       [disabled]="isLoading()"
+      [hasMessages]="messages().length > 0"
     >
     </textarea>
     <div class="menu-area">

@@ -60,6 +60,9 @@ export class App implements OnInit, OnDestroy, OnChanges {
   isLoading = false;
   private subscription?: Subscription;
   lastRequest: ConversationRequest | undefined;
+  collapsed = signal<Boolean>(false);
+  logo = signal('');
+  label = signal('');
 
   startMessage(message: string): void {
     const userInput = this.userInput();
@@ -106,10 +109,24 @@ export class App implements OnInit, OnDestroy, OnChanges {
 
   ngOnInit(): void {
     window.addEventListener(this.SELECT_EVENT_NAME, (e: Event) => {
-      // debugger;
       const customEvent = e as CustomEvent;
       this.currentConversationId = customEvent.detail.id;
       this.loadConversation(customEvent.detail.id);
+    });
+
+    window.addEventListener('chatClear', (e: Event) => {
+      this.clearConversation();
+    });
+
+    window.addEventListener('logoUpdate', (e: Event) => {
+      const customEvent = e as CustomEvent;
+      this.logo.set(customEvent.detail.logo);
+      this.label.set(customEvent.detail.label);
+    });
+
+    window.addEventListener('paneSize', (e: Event) => {
+      const customEvent = e as CustomEvent;
+      this.collapsed.set(customEvent.detail.collapsed);
     });
 
     this.currentConversationId = `conv${Date.now()}`;
@@ -165,9 +182,8 @@ export class App implements OnInit, OnDestroy, OnChanges {
   }
 
   async loadConversation(id: string) {
-    if (!this.dynamoService || !this.fileService) return alert(id);
+    if (!this.dynamoService || !this.fileService) return;
     const conversation = await this.dynamoService?.getConversation(id);
-    console.log({ conversation });
     if (!conversation?.messages) return;
     this.messages.set(conversation?.messages!);
     this.chatCaption.set(conversation?.title!);
@@ -175,6 +191,16 @@ export class App implements OnInit, OnDestroy, OnChanges {
     this.conversationId = conversation?.id;
     this.userInput.set('');
     this.highlight();
+  }
+
+  clearConversation() {
+    if (!this.dynamoService || !this.fileService) return;
+
+    this.messages.set([]);
+    this.chatCaption.set('');
+    this.fileService.files.set([]);
+    this.conversationId = '';
+    this.userInput.set('');
   }
 
   highlight() {

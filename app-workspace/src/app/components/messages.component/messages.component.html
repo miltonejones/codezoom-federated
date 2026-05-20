@@ -1,4 +1,4 @@
-<div class="chat-window" [class.chatting]="messages().length > 0">
+<div class="chat-window" [class.collapsed]="collapsed()" [class.chatting]="messages().length > 0">
   <div
     *ngFor="let message of messages()"
     class="message"

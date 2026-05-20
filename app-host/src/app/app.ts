@@ -10,10 +10,11 @@ import {
 import { RouterOutlet } from '@angular/router';
 import { MicroFrontend } from './micro-frontend';
 import { ChatManagerService, ConversationManagerService, FileManagerService } from './services';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, CommonModule],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -25,6 +26,7 @@ export class App implements OnInit, OnDestroy {
   workspaceContainer!: ViewContainerRef;
   private listComponentRef: ComponentRef<any> | null = null;
   private workspaceComponentRef: ComponentRef<any> | null = null;
+  collapsed = signal<Boolean>(false);
 
   constructor(
     private microSvc: MicroFrontend,
@@ -34,6 +36,10 @@ export class App implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit() {
+    window.addEventListener('paneSize', (e: Event) => {
+      const customEvent = e as CustomEvent;
+      this.collapsed.set(customEvent.detail.collapsed);
+    });
     const listModule: any = await this.microSvc.loadRemoteComponent('app-list', 4201);
     this.listContainer.clear();
     this.listComponentRef = this.listContainer.createComponent(listModule.App);

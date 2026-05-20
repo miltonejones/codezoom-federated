@@ -1,0 +1,7 @@
+@for(question of questions; track question.text) {
+<button
+  (click)="setMessage(question.text)"
+  class="btn btn-outline-dark btn-sm question-btn m-1"
+  [innerHTML]="question.html"
+></button>
+}

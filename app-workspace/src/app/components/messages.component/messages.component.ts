@@ -10,4 +10,5 @@ import { ChatMessage } from '@code-zoom/shared-types';
 })
 export class MessagesComponent {
   messages = input<ChatMessage[]>([]);
+  collapsed = input<Boolean>(false);
 }

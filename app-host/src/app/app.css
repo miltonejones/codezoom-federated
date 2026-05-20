@@ -21,3 +21,11 @@
 .app-workspace {
   width: calc(100vw - 300px - 0.25rem);
 }
+
+.app-host.collapsed .app-list {
+  width: calc(48px - 0.25rem);
+}
+
+.app-host.collapsed .app-workspace {
+  width: calc(100vw - 48px - 0.25rem);
+}
