@@ -133,7 +133,7 @@ jobs:
           cat > app-workspace/src/environments/environment.ts << 'EOF'
           export const environment = {
             production: ${{ github.ref_name == 'main' }},
-            assetsUrl: '${{ steps.remotes.outputs.WORKSPACE_REMOTE_URL }}'
+            assetsUrl: 'https://${{ steps.remotes.outputs.WORKSPACE_REMOTE_URL }}'
           };
           EOF
           echo "Generated environment.ts with assetsUrl: $ASSETS_URL"
