@@ -9,7 +9,7 @@ export class AssetsService {
     if (window.location.hostname === 'localhost') {
       return 'http://localhost:4203';
     }
-    return window.location.origin;
+    return 'https://yellow-water-00b488b0f-dev.eastus2.7.azurestaticapps.net'; //window.location.origin;
   }
 
   getImageUrl(imagePath: string): string {
