@@ -44,6 +44,32 @@ jobs:
           echo "Generated manifest:"
           cat app-host/public/federation.manifest.json
 
+      - name: Add CORS configuration to apps
+        run: |
+          # For app-list
+          cat > app-list/src/staticwebapp.config.json << 'EOF'
+          {
+            "globalHeaders": {
+              "Access-Control-Allow-Origin": "https://happy-grass-0e377e40f-dev.eastus2.7.azurestaticapps.net",
+              "Access-Control-Allow-Methods": "GET, OPTIONS",
+              "Access-Control-Allow-Headers": "Content-Type"
+            }
+          }
+          EOF
+
+          # For app-workspace
+          cat > app-workspace/src/staticwebapp.config.json << 'EOF'
+          {
+            "globalHeaders": {
+              "Access-Control-Allow-Origin": "https://happy-grass-0e377e40f-dev.eastus2.7.azurestaticapps.net",
+              "Access-Control-Allow-Methods": "GET, OPTIONS",
+              "Access-Control-Allow-Headers": "Content-Type"
+            }
+          }
+          EOF
+
+          echo "CORS configuration added to apps"
+
       - name: Build app-host
         run: |
           if [ -d "app-host" ]; then
@@ -255,27 +281,6 @@ jobs:
           else
             echo "No build found for app-workspace"
           fi
-
-      - name: Configure CORS for remote apps
-        run: |
-          # Get app names
-          LIST_NAME=$(az staticwebapp list --resource-group rg-microfrontend-dev --query "[?contains(name, 'app-list')].name" -o tsv | head -1)
-          WORKSPACE_NAME=$(az staticwebapp list --resource-group rg-microfrontend-dev --query "[?contains(name, 'app-workspace')].name" -o tsv | head -1)
-          HOST_URL=$(az staticwebapp show --name $(az staticwebapp list --resource-group rg-microfrontend-dev --query "[?contains(name, 'app-host')].name" -o tsv | head -1) --resource-group rg-microfrontend-dev --query defaultHostname -o tsv)
-
-          # Add CORS for list app
-          az staticwebapp cors add \
-            --name $LIST_NAME \
-            --resource-group rg-microfrontend-dev \
-            --allowed-origins "https://${HOST_URL}"
-
-          # Add CORS for workspace app
-          az staticwebapp cors add \
-            --name $WORKSPACE_NAME \
-            --resource-group rg-microfrontend-dev \
-            --allowed-origins "https://${HOST_URL}"
-
-          echo "CORS configured for remote apps"
 
       - name: Configure Federation URLs
         if: steps.tokens.outputs.HOST_TOKEN != ''
