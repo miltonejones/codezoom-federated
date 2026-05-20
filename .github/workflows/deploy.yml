@@ -131,10 +131,10 @@ jobs:
         run: |
           # Generate the environment.ts file
           if [ -d "app-workspace" ]; then
-            cat > app-workspace/src/environments/environment.ts << EOF
+            cat > app-workspace/src/environments/environment.ts << 'EOF'
             export const environment = {
               production: ${{ github.ref_name == 'main' }},
-              assetsUrl: '${{ steps.remotes.outputs.WORKSPACE_REMOTE_URL}}'
+              assetsUrl: '${{ steps.remotes.outputs.WORKSPACE_REMOTE_URL }}'
             };
             EOF
 
