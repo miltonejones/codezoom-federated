@@ -125,7 +125,7 @@ jobs:
       - name: Add CORS to app-workspace
         run: |
           # After building, add the CORS config to the build output
-          cat > app-list/dist/app-workspace/browser/staticwebapp.config.json << 'EOF'
+          cat > app-workspace/dist/app-workspace/browser/staticwebapp.config.json << 'EOF'
           {
             "globalHeaders": {
               "Access-Control-Allow-Origin": "*",
